@@ -10,11 +10,21 @@ import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.fxmisc.richtext.CodeArea;
+import org.fxmisc.richtext.model.StyleSpan;
+import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.kordamp.bootstrapfx.scene.layout.Panel;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 
 public class HelloApplication extends Application {
-    Scene escena;
+    private Scene escena;
+    private CodeArea cda_editor;
+    private static final List<String> palabrasReservadas= Arrays.asList("dclr","DCLR","set","SET","add","ADD","cmp","CMP","je","JE","jne","JNE");
     @Override
     public void start(Stage stage){
         CrearUI();
@@ -25,7 +35,8 @@ public class HelloApplication extends Application {
         stage.getIcons().add(icon);
     }
     private void CrearUI(){
-        CodeArea cda_editor=new CodeArea();
+        cda_editor=new CodeArea();
+        IniciarEditor();
 
         Panel pnl_principal=new Panel();
         //MenuItems
@@ -35,13 +46,13 @@ public class HelloApplication extends Application {
         MenuItem mit_buscar=new MenuItem("Buscar");
         MenuItem mit_buscar_reemplazar=new MenuItem("Buscar y Reemplazar");
 
-        MenuItem mit_run=new MenuItem("Run code");
+        MenuItem mit_run=new MenuItem("Ejecutar código");
         //Menus
         Menu men_archivo=new Menu("Archivo");
         men_archivo.getItems().addAll(mit_guardar,mit_abrir);
         Menu men_editar=new Menu("Editar");
         men_editar.getItems().addAll(mit_buscar,mit_buscar_reemplazar);
-        Menu men_run=new Menu("Run");
+        Menu men_run=new Menu("Ejecutar");
         men_run.getItems().addAll(mit_run);
         //MenuBar
         MenuBar mbr_principal=new MenuBar();
@@ -54,6 +65,49 @@ public class HelloApplication extends Application {
 
 
         escena=new Scene(pnl_principal,600,600);
+        escena.getStylesheets().add(getClass().getResource("/css/main.css").toString());
+    }
+
+    private void IniciarEditor() {
+        cda_editor.setStyle("-fx-font-size: 14px; -fx-font-family: Consolas;");
+        cda_editor.textProperty().addListener((obs, texto, nuevoTexto) -> {
+            if (!nuevoTexto.isEmpty() && !nuevoTexto.isBlank()) {
+                cda_editor.setStyleSpans(0, identificarPalabras(nuevoTexto));
+            }
+        });
+    }
+
+    private static StyleSpans<Collection<String>> identificarPalabras(String texto){
+        StyleSpansBuilder<Collection<String>> creadorSpans = new StyleSpansBuilder<>();
+
+        // Utilizamos una expresión regular para dividir el texto en palabras, incluyendo símbolos como puntuación
+        String[] textoArreglo = texto.split("\\s+");  // Esto separa por espacios, saltos de línea, tabulaciones
+        int posActual = 0; // Posición inicial en el texto
+
+        int longitud_acumulada=0;
+        for (String palabra : textoArreglo) {
+            int length = palabra.length();
+
+            if(posActual!=0){
+                if (palabrasReservadas.contains(palabra)) {
+                    creadorSpans.add(Collections.singleton("palabraReservada"), length+1);
+                } else {
+                    creadorSpans.add(Collections.singleton("default"), length+1);
+                }
+            }else{
+                if (palabrasReservadas.contains(palabra)) {
+                    creadorSpans.add(Collections.singleton("palabraReservada"), length);
+                } else {
+                    creadorSpans.add(Collections.singleton("default"), length);
+                }
+            }
+
+
+            posActual += length + 1; // Avanzamos a la siguiente palabra considerando los espacios
+            longitud_acumulada=longitud_acumulada+length;
+        }
+
+        return creadorSpans.create();
     }
 
     public static void main(String[] args) {

@@ -3,3 +3,15 @@
     -fx-fill: red;
     -fx-font-weight: bold;
 }
+
+.palabraReservada {
+    -fx-fill: blue; /* Resalta palabras clave en rojo */
+    -fx-font-weight: bold;
+}
+
+.comentario {
+    -fx-fill: green; /* Resalta comentarios en verde */
+}
+.default {
+    -fx-fill: black; /* Normal para el resto del texto */
+}

@@ -24,6 +24,12 @@ import java.util.List;
 public class HelloApplication extends Application {
     private Scene escena;
     private CodeArea cda_editor;
+    enum State{
+        Q0,
+        Q1,
+        //Evité q2 debido a que es lo mismo si se llega a q3
+        Q3
+    }
     private static final List<String> palabrasReservadas= Arrays.asList("dclr","DCLR","set","SET","add","ADD","cmp","CMP","je","JE","jne","JNE");
     @Override
     public void start(Stage stage){
@@ -108,6 +114,59 @@ public class HelloApplication extends Application {
         }
 
         return creadorSpans.create();
+    }
+
+    private boolean esAceptada(String input) {
+        State currentState = State.Q0;
+
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+
+            switch (currentState) {
+                case Q0:
+                    // Debe ser '@' para pasar a q1
+                    if (c == '@') {
+                        currentState = State.Q1;
+                    } else {
+                        return false; // Rechaza
+                    }
+                    break;
+
+                case Q1:
+                    // Debe ser letra, dígito o '_' para pasar a q3
+                    if (esLetra(c) || esDigito(c) || c == '_') {
+                        currentState = State.Q3;
+                    } else {
+                        return false; // Rechaza
+                    }
+                    break;
+
+                case Q3:
+                    // En q3 se aceptan más letras, dígitos o '_'
+                    if (esLetra(c) || esDigito(c) || c == '_') {
+                        // Se mantiene en q3
+                        currentState = State.Q3;
+                    } else {
+                        return false; // Rechaza
+                    }
+                    break;
+            }
+        }
+
+        // Acepta solo si termina en q3
+        return (currentState == State.Q3);
+    }
+
+
+    private boolean esLetra(char c) {
+        return ( (c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z')  ||
+                c == 'ñ' || c == 'Ñ');
+        //Acepta char desde a a z, también mayúsculas y ñ min y mayus
+    }
+
+    private boolean esDigito(char c) {
+        return (c >= '0' && c <= '9');
     }
 
     public static void main(String[] args) {

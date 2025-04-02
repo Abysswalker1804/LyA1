@@ -24,7 +24,7 @@ import java.util.List;
 public class HelloApplication extends Application {
     private Scene escena;
     private CodeArea cda_editor;
-    enum State{
+    private static enum State{
         Q0,
         Q1,
         //Evité q2 debido a que es lo mismo si se llega a q3
@@ -83,7 +83,7 @@ public class HelloApplication extends Application {
         });
     }
 
-    private static StyleSpans<Collection<String>> identificarPalabras(String texto){
+    private StyleSpans<Collection<String>> identificarPalabras(String texto){
         StyleSpansBuilder<Collection<String>> creadorSpans = new StyleSpansBuilder<>();
 
         // Utilizamos una expresión regular para dividir el texto en palabras, incluyendo símbolos como puntuación
@@ -98,13 +98,25 @@ public class HelloApplication extends Application {
                 if (palabrasReservadas.contains(palabra)) {
                     creadorSpans.add(Collections.singleton("palabraReservada"), length+1);
                 } else {
-                    creadorSpans.add(Collections.singleton("default"), length+1);
+                    if(esAceptada(palabra)){
+                        creadorSpans.add(Collections.singleton("identificador"),length+1);
+                    }else{
+                        if(palabra.equals(".start") || palabra.equals(".end")){
+                            creadorSpans.add(Collections.singleton("iniciofin"),length+1);
+                        }else{
+                            creadorSpans.add(Collections.singleton("default"), length+1);
+                        }
+                    }
                 }
             }else{
                 if (palabrasReservadas.contains(palabra)) {
                     creadorSpans.add(Collections.singleton("palabraReservada"), length);
                 } else {
-                    creadorSpans.add(Collections.singleton("default"), length);
+                    if(palabra.equals(".start") || palabra.equals(".end")){
+                        creadorSpans.add(Collections.singleton("iniciofin"),length);
+                    }else{
+                        creadorSpans.add(Collections.singleton("default"), length);
+                    }
                 }
             }
 

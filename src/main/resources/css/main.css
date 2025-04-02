@@ -1,5 +1,5 @@
 
-.error_lexico{
+.error{
     -fx-fill: red;
     -fx-font-weight: bold;
 }
@@ -14,4 +14,14 @@
 }
 .default {
     -fx-fill: black; /* Normal para el resto del texto */
+}
+
+.identificador{
+    -fx-fill: #f940ff;
+    -fx-font-weight: bold;
+}
+
+.iniciofin{
+    -fx-fill: #dfd500;
+    -fx-font-weight: bold;
 }

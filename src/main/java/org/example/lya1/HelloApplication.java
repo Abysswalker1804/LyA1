@@ -30,6 +30,14 @@ public class HelloApplication extends Application {
         //Evité q2 debido a que es lo mismo si se llega a q3
         Q3
     }
+
+    private static enum StateNum{
+        Q0,
+        Q1,
+        Q2,
+        Q3
+    }
+
     private static final List<String> palabrasReservadas= Arrays.asList("dclr","DCLR","set","SET","add","ADD","cmp","CMP","je","JE","jne","JNE");
     @Override
     public void start(Stage stage){
@@ -183,5 +191,52 @@ public class HelloApplication extends Application {
 
     public static void main(String[] args) {
         launch();
+    }
+
+    private boolean esNumeroValido(String input) {
+        StateNum currentStateNum = StateNum.Q0;
+
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+
+            switch (currentStateNum) {
+                case Q0:
+                    if (esDigito(c)) {
+                        currentStateNum = StateNum.Q1;
+                    } else {
+                        return false;
+                    }
+                    break;
+
+                case Q1:
+                    if (esDigito(c)) {
+                        currentStateNum = StateNum.Q1;
+                    } else if (c == '.') {
+                        currentStateNum = StateNum.Q2;
+                    } else {
+                        return false;
+                    }
+                    break;
+
+                case Q2:
+                    if (esDigito(c)) {
+                        currentStateNum = StateNum.Q3;
+                    } else {
+                        return false;
+                    }
+                    break;
+
+                case Q3:
+                    if (esDigito(c)) {
+                        currentStateNum = StateNum.Q3;
+                    } else {
+                        return false;
+                    }
+                    break;
+            }
+        }
+
+        // La cadena se acepta si termina en Q1 (entero) o en Q3 (flotante válido).
+        return (currentStateNum == StateNum.Q1 || currentStateNum == StateNum.Q3);
     }
 }

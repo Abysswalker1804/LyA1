@@ -30,7 +30,15 @@ public class HelloApplication extends Application {
         //Evité q2 debido a que es lo mismo si se llega a q3
         Q3
     }
+
     private static final List<String> palabrasReservadas= Arrays.asList("dclr","DCLR","set","SET","add","ADD","cmp","CMP","je","JE","jne","JNE","mul","MUL","div","DIV");
+
+    private static enum StateNum{
+        Q0,
+        Q1,
+        Q2,
+        Q3
+    }
     @Override
     public void start(Stage stage){
         CrearUI();
@@ -104,7 +112,11 @@ public class HelloApplication extends Application {
                         if(palabra.equals(".start") || palabra.equals(".end")){
                             creadorSpans.add(Collections.singleton("iniciofin"),length+1);
                         }else{
-                            creadorSpans.add(Collections.singleton("default"), length+1);
+                            if(esNumeroValido(palabra)){
+                                creadorSpans.add(Collections.singleton("default"),length+1);
+                            }else{
+                                creadorSpans.add(Collections.singleton("error"), length+1);
+                            }
                         }
                     }
                 }
@@ -115,7 +127,11 @@ public class HelloApplication extends Application {
                     if(palabra.equals(".start") || palabra.equals(".end")){
                         creadorSpans.add(Collections.singleton("iniciofin"),length);
                     }else{
-                        creadorSpans.add(Collections.singleton("default"), length);
+                        if(esNumeroValido(palabra)){
+                            creadorSpans.add(Collections.singleton("default"),length);
+                        }else{
+                            creadorSpans.add(Collections.singleton("error"), length);
+                        }
                     }
                 }
             }
@@ -183,5 +199,52 @@ public class HelloApplication extends Application {
 
     public static void main(String[] args) {
         launch();
+    }
+
+    private boolean esNumeroValido(String input) {
+        StateNum currentStateNum = StateNum.Q0;
+
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+
+            switch (currentStateNum) {
+                case Q0:
+                    if (esDigito(c)) {
+                        currentStateNum = StateNum.Q1;
+                    } else {
+                        return false;
+                    }
+                    break;
+
+                case Q1:
+                    if (esDigito(c)) {
+                        currentStateNum = StateNum.Q1;
+                    } else if (c == '.') {
+                        currentStateNum = StateNum.Q2;
+                    } else {
+                        return false;
+                    }
+                    break;
+
+                case Q2:
+                    if (esDigito(c)) {
+                        currentStateNum = StateNum.Q3;
+                    } else {
+                        return false;
+                    }
+                    break;
+
+                case Q3:
+                    if (esDigito(c)) {
+                        currentStateNum = StateNum.Q3;
+                    } else {
+                        return false;
+                    }
+                    break;
+            }
+        }
+
+        // La cadena se acepta si termina en Q1 (entero) o en Q3 (flotante válido).
+        return (currentStateNum == StateNum.Q1 || currentStateNum == StateNum.Q3);
     }
 }

@@ -14,6 +14,7 @@
 }
 .default {
     -fx-fill: black; /* Normal para el resto del texto */
+    -fx-underline: true;
 }
 
 .identificador{

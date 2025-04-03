@@ -30,7 +30,7 @@ public class HelloApplication extends Application {
         //Evité q2 debido a que es lo mismo si se llega a q3
         Q3
     }
-    private static final List<String> palabrasReservadas= Arrays.asList("dclr","DCLR","set","SET","add","ADD","cmp","CMP","je","JE","jne","JNE");
+    private static final List<String> palabrasReservadas= Arrays.asList("dclr","DCLR","set","SET","add","ADD","cmp","CMP","je","JE","jne","JNE","mul","MUL","div","DIV");
     @Override
     public void start(Stage stage){
         CrearUI();

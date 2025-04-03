@@ -8,17 +8,19 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.example.lya1.Serializables.Simbolo;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.kordamp.bootstrapfx.scene.layout.Panel;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 
 public class HelloApplication extends Application {
@@ -41,14 +43,16 @@ public class HelloApplication extends Application {
     }
     @Override
     public void start(Stage stage){
-        CrearUI();
+        CrearUI(stage);
         stage.setTitle("Compilador");
         stage.setScene(escena);
         stage.show();
         Image icon = new Image(getClass().getResourceAsStream("/images/othala.png"));
         stage.getIcons().add(icon);
     }
-    private void CrearUI(){
+    private void CrearUI(Stage stage){
+        crearTablaSimbolos();
+        impimirTablaSimbolos(); //Prueba, borrar despues
         cda_editor=new CodeArea();
         IniciarEditor();
 
@@ -56,6 +60,7 @@ public class HelloApplication extends Application {
         //MenuItems
         MenuItem mit_guardar=new MenuItem("Guardar");
         MenuItem mit_abrir=new MenuItem("Abrir");
+        mit_abrir.setOnAction(event -> cargarArchivo(stage));
 
         MenuItem mit_buscar=new MenuItem("Buscar");
         MenuItem mit_buscar_reemplazar=new MenuItem("Buscar y Reemplazar");
@@ -246,5 +251,40 @@ public class HelloApplication extends Application {
 
         // La cadena se acepta si termina en Q1 (entero) o en Q3 (flotante válido).
         return (currentStateNum == StateNum.Q1 || currentStateNum == StateNum.Q3);
+    }
+
+    private void cargarArchivo(Stage stage){
+        FileChooser cargador = new FileChooser();
+        cargador.setTitle("Cargar Archivo");
+        cargador.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de texto","*.txt"));
+        File archivo=cargador.showOpenDialog(stage);
+        if(archivo!=null){
+            try{
+                String contenido = Files.readString(Path.of(archivo.getAbsolutePath()));
+                cda_editor.replaceText(contenido);
+            }catch(IOException ioe){ioe.printStackTrace();}
+        }
+    }
+    private void crearTablaSimbolos(){
+        Simbolo [] arr_simbolo=new Simbolo[palabrasReservadas.size()];
+        for(int i=0; i< palabrasReservadas.size(); i++){arr_simbolo[i]=new Simbolo(palabrasReservadas.get(i),"palabra_reservada",null);}
+        try(ObjectOutputStream oos= new ObjectOutputStream(new FileOutputStream("TablaDeSimbolos.dat"))){
+            for(int i=0; i< palabrasReservadas.size(); i++){oos.writeObject(arr_simbolo[i]);}
+        }catch (IOException ioe){
+            System.out.println("Error al guardar en el binario :( !!");
+        }
+    }
+
+    private void impimirTablaSimbolos(){
+        try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream("TablaDeSimbolos.dat"))){
+           Simbolo simbolo=(Simbolo) ois.readObject();
+            System.out.println("Objetos leídos del archivo:");
+            while (simbolo!=null) {
+                System.out.println(simbolo);
+                simbolo=(Simbolo) ois.readObject();
+            }
+        }catch (EOFException eof){
+            System.out.println("Fin del archivo");
+        }catch (Exception e){System.out.println("Error al imprimir tabla de simbolos :( !!");}
     }
 }

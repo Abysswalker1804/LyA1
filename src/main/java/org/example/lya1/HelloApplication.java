@@ -10,6 +10,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.example.lya1.Automatas.AFD_cadena;
 import org.example.lya1.Serializables.Simbolo;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.StyleSpan;
@@ -26,6 +27,7 @@ import java.util.*;
 public class HelloApplication extends Application {
     private Scene escena;
     private CodeArea cda_editor;
+    private CodeArea cda_error;
     private static enum State{
         Q0,
         Q1,
@@ -51,8 +53,8 @@ public class HelloApplication extends Application {
         stage.getIcons().add(icon);
     }
     private void CrearUI(Stage stage){
-        crearTablaSimbolos();
-        impimirTablaSimbolos(); //Prueba, borrar despues
+        //crearTablaSimbolos();
+        //impimirTablaSimbolos();
         cda_editor=new CodeArea();
         IniciarEditor();
 
@@ -65,20 +67,32 @@ public class HelloApplication extends Application {
         MenuItem mit_buscar=new MenuItem("Buscar");
         MenuItem mit_buscar_reemplazar=new MenuItem("Buscar y Reemplazar");
 
-        MenuItem mit_run=new MenuItem("Ejecutar código");
+        MenuItem mit_compilar=new MenuItem("Compilar");
+        mit_compilar.setOnAction(event -> {
+            crearTablaSimbolos();
+            impimirTablaSimbolos();
+            //System.out.println(AFD_cadena.evaluar('"'+"cadena"+'"'));
+        });
         //Menus
         Menu men_archivo=new Menu("Archivo");
         men_archivo.getItems().addAll(mit_guardar,mit_abrir);
         Menu men_editar=new Menu("Editar");
         men_editar.getItems().addAll(mit_buscar,mit_buscar_reemplazar);
         Menu men_run=new Menu("Ejecutar");
-        men_run.getItems().addAll(mit_run);
+        men_run.getItems().addAll(mit_compilar);
         //MenuBar
         MenuBar mbr_principal=new MenuBar();
         mbr_principal.getMenus().addAll(men_archivo,men_editar,men_run);
 
+        //Seccion de errores
+        cda_error=new CodeArea();
+        cda_error.setEditable(false);
+        cda_error.setMinHeight(100);
+        cda_error.setStyle("-fx-border-color: #000000; -fx-border-width: 2px; -fx-border-radius: 5px;");
+
         pnl_principal.setHeading(mbr_principal);
         pnl_principal.setBody(cda_editor);
+        pnl_principal.setFooter(cda_error);
 
         pnl_principal.setPadding(new Insets(5));
 
@@ -120,7 +134,11 @@ public class HelloApplication extends Application {
                             if(esNumeroValido(palabra)){
                                 creadorSpans.add(Collections.singleton("default"),length+1);
                             }else{
-                                creadorSpans.add(Collections.singleton("error"), length+1);
+                                if(AFD_cadena.evaluar(palabra)){
+                                    creadorSpans.add(Collections.singleton("cadena"),length+1);
+                                }else{
+                                    creadorSpans.add(Collections.singleton("error"), length+1);
+                                }
                             }
                         }
                     }
@@ -135,7 +153,11 @@ public class HelloApplication extends Application {
                         if(esNumeroValido(palabra)){
                             creadorSpans.add(Collections.singleton("default"),length);
                         }else{
-                            creadorSpans.add(Collections.singleton("error"), length);
+                            if(AFD_cadena.evaluar(palabra)){
+                                creadorSpans.add(Collections.singleton("cadena"),length);
+                            }else{
+                                creadorSpans.add(Collections.singleton("error"), length);
+                            }
                         }
                     }
                 }
@@ -266,12 +288,43 @@ public class HelloApplication extends Application {
         }
     }
     private void crearTablaSimbolos(){
-        Simbolo [] arr_simbolo=new Simbolo[palabrasReservadas.size()];
-        for(int i=0; i< palabrasReservadas.size(); i++){arr_simbolo[i]=new Simbolo(palabrasReservadas.get(i),"palabra_reservada",null);}
-        try(ObjectOutputStream oos= new ObjectOutputStream(new FileOutputStream("TablaDeSimbolos.dat"))){
-            for(int i=0; i< palabrasReservadas.size(); i++){oos.writeObject(arr_simbolo[i]);}
-        }catch (IOException ioe){
-            System.out.println("Error al guardar en el binario :( !!");
+        boolean continuar=true;
+
+        String [] contenido=cda_editor.getText().split("\\s+");
+        List<Simbolo> lista_identificadores=new ArrayList<>();
+        for(String token: contenido){
+            if(!(token.equals(".start") || token.equals(".end"))){
+                if(!palabrasReservadas.contains(token)){
+                    if(esAceptada(token)){
+                        lista_identificadores.add(new Simbolo(token,"identificador",null));
+                    }else if(esNumeroValido(token)){
+                        lista_identificadores.add(new Simbolo(token,"número",token));
+                    }else if(AFD_cadena.evaluar(token)){
+                        lista_identificadores.add(new Simbolo(token,"cadena",token));
+                    }else{
+                        String mensaje="Símbolo no identificado cerca de '"+token+"'!";
+                        StyleSpans<Collection<String>> spans = new StyleSpansBuilder<Collection<String>>().add(Collections.singleton("error"), mensaje.length()).create();
+                        cda_error.replaceText(mensaje);
+                        cda_error.setStyleSpans(0,spans);
+                        continuar=false;
+                        break;
+                    }
+                }
+            }
+        }
+        if(continuar){
+            Simbolo [] arr_simbolo=new Simbolo[palabrasReservadas.size()];
+            for(int i=0; i< palabrasReservadas.size(); i++){arr_simbolo[i]=new Simbolo(palabrasReservadas.get(i),"palabra_reservada",null);}
+            try(ObjectOutputStream oos= new ObjectOutputStream(new FileOutputStream("TablaDeSimbolos.dat"))){
+                for(int i=0; i< palabrasReservadas.size(); i++){oos.writeObject(arr_simbolo[i]);}
+
+                String mensaje="Código compilado con éxito!";
+                StyleSpans<Collection<String>> spans = new StyleSpansBuilder<Collection<String>>().add(Collections.singleton("compilacion"), mensaje.length()).create();
+                cda_error.replaceText(mensaje);
+                cda_error.setStyleSpans(0,spans);
+            }catch (IOException ioe){
+                System.out.println("Error al guardar en el binario :( !!");
+            }
         }
     }
 
@@ -287,4 +340,5 @@ public class HelloApplication extends Application {
             System.out.println("Fin del archivo");
         }catch (Exception e){System.out.println("Error al imprimir tabla de simbolos :( !!");}
     }
+
 }

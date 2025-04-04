@@ -1,10 +1,16 @@
-
+.compilacion{
+    -fx-fill: #3a57ff;
+    -fx-font-weight: bold;
+}
 .error{
     -fx-fill: red;
     -fx-font-weight: bold;
     -fx-underline: true;
 }
-
+.cadena{
+    -fx-fill: green;
+    -fx-font-weight: bold;
+}
 .palabraReservada {
     -fx-fill: blue; /* Resalta palabras clave en rojo */
     -fx-font-weight: bold;

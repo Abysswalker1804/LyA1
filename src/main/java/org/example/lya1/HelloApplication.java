@@ -112,8 +112,6 @@ public class HelloApplication extends Application {
 
     private StyleSpans<Collection<String>> identificarPalabras(String texto){
         StyleSpansBuilder<Collection<String>> creadorSpans = new StyleSpansBuilder<>();
-
-        // Utilizamos una expresión regular para dividir el texto en palabras, incluyendo símbolos como puntuación
         String[] textoArreglo = texto.split("\\s+");  // Esto separa por espacios, saltos de línea, tabulaciones
         int posActual = 0; // Posición inicial en el texto
 
@@ -164,7 +162,7 @@ public class HelloApplication extends Application {
             }
 
 
-            posActual += length + 1; // Avanzamos a la siguiente palabra considerando los espacios
+            posActual += length + 1;
             longitud_acumulada=longitud_acumulada+length;
         }
 

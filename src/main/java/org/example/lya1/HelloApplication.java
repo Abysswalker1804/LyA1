@@ -418,7 +418,7 @@ public class HelloApplication extends Application {
                         break;
                     case "mul":
                     case "MUL":
-                        identificador=map_id.getIdentificador(contenido[pos+1]);//Buscar si el identificador ya fue declarado
+                        identificador=map_id.getIdentificador(contenido[pos+1]); //Buscar si el identificador ya fue declarado
                         if(identificador!=null){
                             if(AFD_Identificadores.evaluar(contenido[pos+2])){
                                 String [] id= map_id.getIdentificador(contenido[pos+2]);

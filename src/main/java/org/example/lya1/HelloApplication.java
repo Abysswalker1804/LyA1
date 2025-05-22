@@ -9,6 +9,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.example.lya1.Automatas.AFD_Identificadores;
 import org.example.lya1.Automatas.AFD_cadena;
+import org.example.lya1.Automatas.AFD_numero;
 import org.example.lya1.Automatas.AP_Sintaxis;
 import org.example.lya1.Hash.Hash;
 import org.example.lya1.Serializables.Simbolo;
@@ -37,7 +38,7 @@ public class HelloApplication extends Application {
     }
 
     private static final List<String> palabrasReservadas= Arrays.asList("dclr","DCLR","set","SET","add","ADD","mul","MUL","div","DIV","sub","SUB","print","PRINT");
-
+    private List<Integer> direcciones_hash=new ArrayList<>();
     private static enum StateNum{
         Q0,
         Q1,
@@ -82,13 +83,16 @@ public class HelloApplication extends Application {
                     StyleSpans<Collection<String>> spans = new StyleSpansBuilder<Collection<String>>().add(Collections.singleton("compilacion"), mensaje.length()).create();
                     cda_error.replaceText(mensaje);
                     cda_error.setStyleSpans(0,spans);
+                    //Crear tabla simbolos
+                    crearTablaSimbolosHash();
+                    impimirTablaSimbolos();
                 }else{
                     String mensaje=ap_sintax.errorMsg;
                     StyleSpans<Collection<String>> spans = new StyleSpansBuilder<Collection<String>>().add(Collections.singleton("error"), mensaje.length()).create();
                     cda_error.replaceText(mensaje);
                     cda_error.setStyleSpans(0,spans);
                 }
-                //crearTablaSimbolos();//Tabla de simbolos crear
+                //Tabla de simbolos crear
                 //impimirTablaSimbolos();
                 //System.out.println(AFD_cadena.evaluar('"'+"cadena"+'"'));
             }else{
@@ -172,29 +176,6 @@ public class HelloApplication extends Application {
                     }
                 }
             }
-            /*
-            if(posActual!=0){
-
-            }else{
-                if (palabrasReservadas.contains(palabra)) {
-                    creadorSpans.add(Collections.singleton("palabraReservada"), length);
-                } else {
-                    if(palabra.equals(".start") || palabra.equals(".end")){
-                        creadorSpans.add(Collections.singleton("iniciofin"),length);
-                    }else{
-                        if(esNumeroValido(palabra)){
-                            creadorSpans.add(Collections.singleton("default"),length);
-                        }else{
-                            if(AFD_cadena.evaluar(palabra)){
-                                creadorSpans.add(Collections.singleton("cadena"),length);
-                            }else{
-                                creadorSpans.add(Collections.singleton("error"), length);
-                            }
-                        }
-                    }
-                }
-            }*/
-
         }
 
         return creadorSpans.create();
@@ -318,7 +299,6 @@ public class HelloApplication extends Application {
     }
     private void crearTablaSimbolos(){
         boolean continuar=true;
-
         String [] contenido=cda_editor.getText().split("\\s+");
         List<Simbolo> lista_identificadores=new ArrayList<>();
         for(String token: contenido){
@@ -358,76 +338,173 @@ public class HelloApplication extends Application {
     }
 
     private void impimirTablaSimbolos(){
-        try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream("TablaDeSimbolos.dat"))){
-           Simbolo simbolo=(Simbolo) ois.readObject();
-            System.out.println("Objetos leídos del archivo:");
-            while (simbolo!=null) {
-                System.out.println(simbolo);
-                simbolo=(Simbolo) ois.readObject();
+        try {
+            String token,tipo,valor;
+            RandomAccessFile raf = new RandomAccessFile("./archivo_simbolos.bin", "rw");
+            for(int direccion : direcciones_hash){
+                raf.seek(direccion);
+                token=raf.readUTF();
+                tipo=raf.readUTF();
+                valor=raf.readUTF();
+                System.out.println("Símbolo: "+token+" | Tipo: "+tipo+" | Valor: "+valor);
             }
-        }catch (EOFException eof){
-            System.out.println("Fin del archivo");
-        }catch (Exception e){System.out.println("Error al imprimir tabla de simbolos :( !!");}
+        }catch (Exception e){
+            System.out.println("Algo salió mal...");
+            e.printStackTrace();
+        }
+        System.out.println();
     }
 
-    private void crearArchivoSimbolos(){//Tamaño de registro de 156: String de 40, 17 y 21
+    private void crearTablaSimbolosHash(){
         try{
             Hash hash=new Hash();
             RandomAccessFile raf = new RandomAccessFile("./archivo_simbolos.bin", "rw");
             raf.seek(0);
             String [] contenido=cda_editor.getText().split("\\s+");
-            int posicion=0;
-            for(String token: contenido){
-                if(!(token.equals(".start") || token.equals(".end"))){
-                    if(!palabrasReservadas.contains(token)){
-                        if(esAceptada(token)){
-                            Simbolo s;
-                            if(esNumeroValido(contenido[posicion+1]) || AFD_cadena.evaluar(token)){ //Si lo que sigue del identificador es una cadena o número, lo guarda
-                                s=new Simbolo(token,"identificador",contenido[posicion+1]);
-                            }else {
-                                s = new Simbolo(token, "identificador", "nulo");
-                            }
-                            raf.seek(156*Integer.parseInt(hash.hash(token)));
-                            raf.writeUTF(s.getSimbolo());
-                            raf.writeUTF(s.getTipo());
-                            raf.writeUTF(s.getTipo());
-                        }else if(esNumeroValido(token)){
-                            //Numero
-                        }else if(AFD_cadena.evaluar(token)){
-                            //cadena
+            String token;
+            Simbolo s;
+            String [] identificador;
+            direcciones_hash=new ArrayList<>();
+
+            int direccion_hash;
+            final int registro_size=156;//Tamaño de registro de 156: String de 40, 17 y 21
+            Mapa_Identificadores map_id=new Mapa_Identificadores();
+
+            //Buscar declaraciones para los identificadores
+            for(int pos=0; pos< contenido.length; pos++){
+                token=contenido[pos];
+                switch (token){
+                    case "dclr":
+                    case "DCLR":
+                        if(pos+2< contenido.length){
+                            if(AFD_numero.evaluar(contenido[pos+2]) || AFD_cadena.evaluar(contenido[pos+2]))
+                                map_id.add(contenido[pos+1],contenido[pos+2]);
+                            else
+                                map_id.add(contenido[pos+1],"nulo");
                         }else{
-                            String mensaje="Símbolo no identificado cerca de '"+token+"'!";
-                            StyleSpans<Collection<String>> spans = new StyleSpansBuilder<Collection<String>>().add(Collections.singleton("error"), mensaje.length()).create();
-                            cda_error.replaceText(mensaje);
-                            cda_error.setStyleSpans(0,spans);
-                            //continuar=false;
-                            break;
+                            map_id.add(contenido[pos+1],"nulo");
                         }
-                    }
-                }else{
-                    raf.seek(156*Integer.parseInt(hash.hash(token)));
-                    Simbolo s =new Simbolo(token, "palabra reservada", "");
+                        break;
+                    default:
+                }
+            }
+
+            //Actualizar valores de identificadores
+            for(int pos=0; pos< contenido.length; pos++){
+                token=contenido[pos];
+                switch (token){
+                    case "set":
+                    case "SET":
+                        identificador=map_id.getIdentificador(contenido[pos+1]);//Buscar si el identificador ya fue declarado
+                        if(identificador!=null){
+                            map_id.replace(contenido[pos+1],contenido[pos+2]);
+                        }//Si no fue declarado, no se guarda en la tabla
+                        break;
+                    case "add":
+                    case "ADD":
+                        identificador=map_id.getIdentificador(contenido[pos+1]);//Buscar si el identificador ya fue declarado
+                        if(identificador!=null){
+                            if(AFD_Identificadores.evaluar(contenido[pos+2])){
+                                String [] id= map_id.getIdentificador(contenido[pos+2]);
+                                if(id!=null){
+                                    map_id.replace(contenido[pos+1],(Double.parseDouble(identificador[1]) + Double.parseDouble(id[1]))+"");
+                                }else{
+                                    System.out.println("\""+contenido[pos+2]+"\" no fue declarado!");
+                                }
+                            }else{
+                                map_id.replace(contenido[pos+1],(Double.parseDouble(identificador[1]) + Double.parseDouble(contenido[pos+2]))+"");
+                            }
+                        }
+                        break;
+                    case "mul":
+                    case "MUL":
+                        identificador=map_id.getIdentificador(contenido[pos+1]);//Buscar si el identificador ya fue declarado
+                        if(identificador!=null){
+                            if(AFD_Identificadores.evaluar(contenido[pos+2])){
+                                String [] id= map_id.getIdentificador(contenido[pos+2]);
+                                if(id!=null){
+                                    map_id.replace(contenido[pos+1],(Double.parseDouble(identificador[1]) * Double.parseDouble(id[1]))+"");
+                                }else{
+                                    System.out.println("\""+contenido[pos+2]+"\" no fue declarado!");
+                                }
+                            }else{
+                                map_id.replace(contenido[pos+1],(Double.parseDouble(identificador[1]) * Double.parseDouble(contenido[pos+2]))+"");
+                            }
+                        }
+                        break;
+                    case "sub":
+                    case "SUB":
+                        identificador=map_id.getIdentificador(contenido[pos+1]);//Buscar si el identificador ya fue declarado
+                        if(identificador!=null){
+                            if(AFD_Identificadores.evaluar(contenido[pos+2])){
+                                String [] id= map_id.getIdentificador(contenido[pos+2]);
+                                if(id!=null){
+                                    map_id.replace(contenido[pos+1],(Double.parseDouble(identificador[1]) - Double.parseDouble(id[1]))+"");
+                                }else{
+                                    System.out.println("\""+contenido[pos+2]+"\" no fue declarado!");
+                                }
+                            }else{
+                                map_id.replace(contenido[pos+1],(Double.parseDouble(identificador[1]) - Double.parseDouble(contenido[pos+2]))+"");
+                            }
+                        }
+                        break;
+                    case "div":
+                    case "DIV":
+                        identificador=map_id.getIdentificador(contenido[pos+1]);//Buscar si el identificador ya fue declarado
+                        if(identificador!=null){
+                            try{
+                                if(AFD_Identificadores.evaluar(contenido[pos+2])){
+                                    String [] id= map_id.getIdentificador(contenido[pos+2]);
+                                    if(id!=null){
+                                        map_id.replace(contenido[pos+1],(Double.parseDouble(identificador[1]) / Double.parseDouble(id[1]))+"");
+                                    }else{
+                                        System.out.println("\""+contenido[pos+2]+"\" no fue declarado!");
+                                    }
+                                }else{
+                                    map_id.replace(contenido[pos+1],(Double.parseDouble(identificador[1]) / Double.parseDouble(contenido[pos+2]))+"");
+                                }
+                            }catch (Exception e){
+                                map_id.replace(contenido[pos+1],"indef");//Por cualquier error
+                            }
+                        }
+                        break;
+                }
+            }
+
+            //Guardar palabras reservadas en la tabla de símbolos
+            for(int pos=0; pos< contenido.length; pos++){
+                token=contenido[pos];
+                if(token.equals(".start") || token.equals(".end") || palabrasReservadas.contains(token)){
+                    s=new Simbolo(token,"palabra_reservada",token);
+                    direccion_hash=registro_size*Integer.parseInt(hash.hash(token));
+                    raf.seek(direccion_hash);
                     raf.writeUTF(s.getSimbolo());
                     raf.writeUTF(s.getTipo());
-                    raf.writeUTF(s.getTipo());
-                    //Debería detectar .start y .end
+                    raf.writeUTF(s.getValor());
+                    direcciones_hash.add(direccion_hash);
                 }
-                posicion++;
             }
+            //Guardar identificadores en la tabla de símbolos
+            String [][] all= map_id.getAll();
+            for(int i=0; i<all.length; i++){
+                s=new Simbolo(all[i][0],"identificador",all[i][1]);
+                direccion_hash=registro_size*Integer.parseInt(hash.hash(all[i][0]));
+                raf.seek(direccion_hash);
+                raf.writeUTF(s.getSimbolo());
+                raf.writeUTF(s.getTipo());
+                raf.writeUTF(s.getValor());
+                direcciones_hash.add(direccion_hash);
+            }
+            //Todos los simbolos guardados
         }catch (FileNotFoundException fnfe){
             System.out.println("No se encontró el archivo!");
         }catch (IOException ioe){
             System.out.println("Excepción de datos serializados (IOE):");
             ioe.printStackTrace();
-        };
-    }
-    private boolean revisarSintaxis(String texto){
-        boolean flag=true;
-        String[] textoArreglo = texto.split("\\s+");  // Esto separa por espacios, saltos de línea, tabulaciones
-        for(String token: textoArreglo){
-            if(token.equals(".start")){}
+        }catch (Exception e){
+            System.out.println("Otra cosa salió mal...");
+            e.printStackTrace();
         }
-        return flag;
     }
 }
 
@@ -496,5 +573,100 @@ class Tokenizador{
         tokens=new String[aux.length+1];
         for(int i=0; i< aux.length; i++){if(aux[i]!=null){tokens[i]=aux[i];}}
         tokens[aux.length]=token;
+    }
+}
+
+class Mapa_Identificadores{
+    private Nodo_Identificador inicio;
+    public Mapa_Identificadores(){
+        inicio=null;
+    }
+    public Mapa_Identificadores(String id, String valor){
+        inicio=new Nodo_Identificador(id,valor,null);
+    }
+    public void add(String id, String valor){
+        if(inicio==null){
+            inicio=new Nodo_Identificador(id,valor,null);
+        }else{
+            if(inicio.getSiguiente()==null){
+                Nodo_Identificador temp=new Nodo_Identificador(id,valor,null);
+                inicio.setSiguiente(temp);
+            }else{
+                Nodo_Identificador aux=inicio;
+                while(aux.getSiguiente()!=null){aux=aux.getSiguiente();}
+                aux.setSiguiente(new Nodo_Identificador(id,valor,null));
+            }
+        }
+    }
+    public void replace(String id, String valor){
+        Nodo_Identificador aux=inicio;
+        while(!aux.getId().equals(id)){aux=aux.getSiguiente();}
+        aux.setValor(valor);
+    }
+    public String[] getIdentificador(String id){
+        String [] nodo=new String[2];
+        Nodo_Identificador aux=inicio;
+        while(aux!=null && !aux.getId().equals(id)){aux=aux.getSiguiente();}
+        if(aux==null){
+            return null;
+        }else{
+            nodo[0]=aux.getId();
+            nodo[1]= aux.getValor();
+            return nodo;
+        }
+    }
+    public String[][] getAll(){
+        int cant=0;
+        Nodo_Identificador aux=inicio;
+        while(aux!=null){
+            cant++;
+            aux=aux.getSiguiente();
+        }
+        String[][] all=new String[cant][2];
+        int i=0;
+        aux=inicio;
+        while(aux!=null && i<all.length){
+            all[i][0]=aux.getId();
+            all[i][1]=aux.getValor();
+            aux=aux.getSiguiente();
+            i++;
+        }
+        return all;
+    }
+}
+
+class Nodo_Identificador {
+    private String id;
+    private String valor;
+    private Nodo_Identificador siguiente;
+
+    public Nodo_Identificador(String id, String valor, Nodo_Identificador nodo){
+        this.id=id;
+        this.valor=valor;
+        this.siguiente=nodo;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getValor() {
+        return valor;
+    }
+
+    public void setValor(String valor) {
+        this.valor = valor;
+    }
+
+    public Nodo_Identificador getSiguiente() {
+        return siguiente;
+    }
+
+    public void setSiguiente(Nodo_Identificador siguiente) {
+        this.siguiente = siguiente;
     }
 }

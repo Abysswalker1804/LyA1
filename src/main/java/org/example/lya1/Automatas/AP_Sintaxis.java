@@ -287,6 +287,9 @@ public class AP_Sintaxis {
                         errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!\nSe esperaba un valor numérico o idenfificador!";
                         flag=false;
                 }
+            }else{
+                errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!\nSe esperaba un valor numérico o idenfificador!";
+                flag=false;
             }
         }else{
             errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!";

@@ -1,6 +1,12 @@
 .compilacion{
     -fx-fill: #3a57ff;
     -fx-font-weight: bold;
+    -fx-font-size:15px;
+}
+.compilacion_error{
+    -fx-fill: red;
+    -fx-font-weight: bold;
+    -fx-font-size:15px;
 }
 .error{
     -fx-fill: red;
@@ -30,5 +36,10 @@
 
 .iniciofin{
     -fx-fill: #dfd500;
+    -fx-font-weight: bold;
+}
+
+.verdadero_falso{
+    -fx-fill: #ff5733;
     -fx-font-weight: bold;
 }

@@ -40,6 +40,7 @@ public class AP_Sintaxis {
     }
     private void q1(int pos) {
         if(pos< tokens.length){
+            String elemento;
             switch (tokens[pos]){
                 case "add":
                 case "ADD":
@@ -90,6 +91,48 @@ public class AP_Sintaxis {
                     else {
                         errorMsg="Error de sintaxis cerca de \"" + tokens[pos] + "\"!";
                         flag = false;
+                    }
+                    break;
+                case "if":
+                    //if | ε | f
+                    pila.push("f");
+                    q10(pos+1);
+                    break;
+                case "while":
+                    elemento=pila.pop();
+                    if(elemento.equals("x")){
+                        //while | x | x
+                        pila.push("x");
+                        q10(pos+1);
+                    }else{
+                        //while | ε | i
+                        pila.push(elemento);//Si no es una x, regresar a la pila
+                        pila.push("i");
+                        q10(pos+1);
+                    }
+                    break;
+                case "do":
+                    //do | ε | x
+                    pila.push("x");
+                    q1(pos+1);
+                    break;
+                case "finish":
+                    elemento= pila.pop();
+                    if(elemento.equals("i") || elemento.equals("f")){
+                        q1(pos+1);
+                    }else{
+                        errorMsg="Estructura incorrecta de ciclo o condicional!";
+                        flag=false;
+                    }
+                    break;
+                case "else":
+                    elemento= pila.pop();
+                    if(elemento.equals("f")){
+                        pila.push("f");
+                        q1(pos+1);
+                    }else{
+                        errorMsg="Estructura incorrecta de ciclo o condicional!";
+                        flag=false;
                     }
                     break;
                 default:
@@ -169,6 +212,7 @@ public class AP_Sintaxis {
     }
     private void q6(int pos) {
         if(pos< tokens.length){
+            String elemento;
             switch (tokens[pos]){
                 case "add":
                 case "ADD":
@@ -221,6 +265,48 @@ public class AP_Sintaxis {
                         flag = false;
                     }
                     break;
+                case "if":
+                    //if | ε | f
+                    pila.push("f");
+                    q10(pos+1);
+                    break;
+                case "while":
+                    elemento=pila.pop();
+                    if(elemento.equals("x")){
+                        //while | x | x
+                        pila.push("x");
+                        q10(pos+1);
+                    }else{
+                        //while | ε | i
+                        pila.push(elemento);//Si no es una x, regresar a la pila
+                        pila.push("i");
+                        q10(pos+1);
+                    }
+                    break;
+                case "do":
+                    //do | ε | x
+                    pila.push("x");
+                    q1(pos+1);
+                    break;
+                case "finish":
+                    elemento= pila.pop();
+                    if(elemento.equals("i") || elemento.equals("f")){
+                        q1(pos+1);
+                    }else{
+                        errorMsg="Estructura incorrecta de ciclo o condicional!";
+                        flag=false;
+                    }
+                    break;
+                case "else":
+                    elemento= pila.pop();
+                    if(elemento.equals("f")){
+                        pila.push("f");
+                        q1(pos+1);
+                    }else{
+                        errorMsg="Estructura incorrecta de ciclo o condicional!";
+                        flag=false;
+                    }
+                    break;
                 default:
                     if (AFD_Identificadores.evaluar(tokens[pos]) || AFD_numero.evaluar(tokens[pos]) || AFD_cadena.evaluar(tokens[pos])){
                         q1(pos+1);
@@ -238,7 +324,7 @@ public class AP_Sintaxis {
         if(pos< tokens.length){
             if (AFD_Identificadores.evaluar(tokens[pos]) || AFD_numero.evaluar(tokens[pos]) || AFD_cadena.evaluar(tokens[pos])) {
                 String elemento_pila = pila.pop();
-                if (elemento_pila.equals("a")) {
+                if (elemento_pila.equals("p")) {
                     q1(pos + 1);
                 } else {
                     errorMsg="Error de sintaxis cerca de \"" + tokens[pos] + "\"!\nSe esperaba una asignación!";
@@ -289,6 +375,85 @@ public class AP_Sintaxis {
                 }
             }else{
                 errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!\nSe esperaba un valor numérico o idenfificador!";
+                flag=false;
+            }
+        }else{
+            errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!";
+            flag=false;
+        }
+    }
+    private void q10(int pos){
+        if(pos< tokens.length){
+            switch (tokens[pos]){
+                case "true":
+                case "false":
+                    q11(pos+1);
+                    break;
+                default:
+                    if(AFD_Identificadores.evaluar(tokens[pos]) || AFD_numero.evaluar(tokens[pos])){
+                        pila.push("o");
+                        q12(pos+1);
+                    }else{
+                        errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!\nSe esperaba una operación lógica o valor booleano!";
+                        flag=false;
+                    }
+            }
+        }else{
+            errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!";
+            flag=false;
+        }
+    }
+    private void q11(int pos){
+        if(pos< tokens.length){
+            String elemento;
+            switch (tokens[pos]){
+                case "then":
+                    elemento= pila.pop();
+                    if(elemento.equals("f") || elemento.equals("i")){
+                        pila.push(elemento);
+                        q1(pos+1);
+                    }else {
+                        errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!\nEstructura incorrecta de ciclo o condicional!";
+                        flag=false;
+                    }
+                    break;
+                case "finish":
+                    if(pila.pop().equals("x"))
+                        q1(pos+1);
+                    break;
+                default:
+                    errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!\nSe esperaba un \"then\" o \"finish\"!";
+                    flag=false;
+            }
+        }else{
+            errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!";
+            flag=false;
+        }
+    }
+    private void q12(int pos){
+        if(pos< tokens.length){
+            if(tokens[pos].equals("<") || tokens[pos].equals(">") || tokens[pos].equals("="))
+                q13(pos+1);
+            else{
+                errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!\nSe esperaba un operador lógico!";
+                flag=false;
+            }
+        }else{
+            errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!";
+            flag=false;
+        }
+    }
+    private void q13(int pos){
+        if(pos< tokens.length){
+            if(AFD_Identificadores.evaluar(tokens[pos]) || AFD_numero.evaluar(tokens[pos])){
+                if(pila.pop().equals("o"))
+                    q11(pos+1);
+                else{
+                    errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!\nEstructura incorrecta de operación lógica";
+                    flag=false;
+                }
+            }else{
+                errorMsg="Error de sintaxis cerca de \""+tokens[pos]+"\"!\nSe esperaba una operación lógica o valor booleano!";
                 flag=false;
             }
         }else{

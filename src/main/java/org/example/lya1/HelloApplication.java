@@ -37,7 +37,7 @@ public class HelloApplication extends Application {
         Q3
     }
 
-    private static final List<String> palabrasReservadas= Arrays.asList("dclr","DCLR","set","SET","add","ADD","mul","MUL","div","DIV","sub","SUB","print","PRINT");
+    private static final List<String> palabrasReservadas= Arrays.asList("dclr","DCLR","set","SET","add","ADD","mul","MUL","div","DIV","sub","SUB","print","PRINT","if","IF","while","WHILE","do","DO","then","THEN","finish","FINISH");
     private List<Integer> direcciones_hash=new ArrayList<>();
     private static enum StateNum{
         Q0,
@@ -62,7 +62,7 @@ public class HelloApplication extends Application {
 
         Panel pnl_principal=new Panel();
         //MenuItems
-        MenuItem mit_guardar=new MenuItem("Guardar");
+        //MenuItem mit_guardar=new MenuItem("Guardar");
         MenuItem mit_abrir=new MenuItem("Abrir");
         mit_abrir.setOnAction(event -> cargarArchivo(stage));
 
@@ -85,10 +85,10 @@ public class HelloApplication extends Application {
                     cda_error.setStyleSpans(0,spans);
                     //Crear tabla simbolos
                     crearTablaSimbolosHash();
-                    impimirTablaSimbolos();
+                    //impimirTablaSimbolos();
                 }else{
                     String mensaje=ap_sintax.errorMsg;
-                    StyleSpans<Collection<String>> spans = new StyleSpansBuilder<Collection<String>>().add(Collections.singleton("error"), mensaje.length()).create();
+                    StyleSpans<Collection<String>> spans = new StyleSpansBuilder<Collection<String>>().add(Collections.singleton("compilacion_error"), mensaje.length()).create();
                     cda_error.replaceText(mensaje);
                     cda_error.setStyleSpans(0,spans);
                 }
@@ -97,7 +97,7 @@ public class HelloApplication extends Application {
                 //System.out.println(AFD_cadena.evaluar('"'+"cadena"+'"'));
             }else{
                 String mensaje="No puede compilarse el código porque hay simbolos o palabras no reconocidas!";
-                StyleSpans<Collection<String>> spans = new StyleSpansBuilder<Collection<String>>().add(Collections.singleton("error"), mensaje.length()).create();
+                StyleSpans<Collection<String>> spans = new StyleSpansBuilder<Collection<String>>().add(Collections.singleton("compilacion_error"), mensaje.length()).create();
                 cda_error.replaceText(mensaje);
                 cda_error.setStyleSpans(0,spans);
             }
@@ -105,14 +105,14 @@ public class HelloApplication extends Application {
         });
         //Menus
         Menu men_archivo=new Menu("Archivo");
-        men_archivo.getItems().addAll(mit_guardar,mit_abrir);
-        Menu men_editar=new Menu("Editar");
-        men_editar.getItems().addAll(mit_buscar,mit_buscar_reemplazar);
+        men_archivo.getItems().addAll(mit_abrir);
+        //Menu men_editar=new Menu("Editar");
+        //men_editar.getItems().addAll(mit_buscar,mit_buscar_reemplazar);
         Menu men_run=new Menu("Ejecutar");
         men_run.getItems().addAll(mit_compilar);
         //MenuBar
         MenuBar mbr_principal=new MenuBar();
-        mbr_principal.getMenus().addAll(men_archivo,men_editar,men_run);
+        mbr_principal.getMenus().addAll(men_archivo,men_run);
 
         //Seccion de errores
         cda_error=new CodeArea();
@@ -159,7 +159,7 @@ public class HelloApplication extends Application {
                     if(palabra.equals(".start") || palabra.equals(".end")){
                         creadorSpans.add(Collections.singleton("iniciofin"),length);
                     }else{
-                        if(esNumeroValido(palabra)){
+                        if(esNumeroValido(palabra) || palabra.equals("<") || palabra.equals(">") || palabra.equals("=")){
                             creadorSpans.add(Collections.singleton("default"),length);
                         }else{
                             if(AFD_cadena.evaluar(palabra)){
@@ -167,6 +167,8 @@ public class HelloApplication extends Application {
                             }else{
                                 if(!palabra.isEmpty() && (palabra.charAt(0)==' ' || palabra.charAt(0)=='\n' || palabra.charAt(0)=='\t')){
                                     creadorSpans.add(Collections.singleton("default"),length);
+                                }else if(palabra.equals("true") || palabra.equals("false")){
+                                    creadorSpans.add(Collections.singleton("verdadero_falso"),length);
                                 }else{
                                     creadorSpans.add(Collections.singleton("error"), length);
                                     error_lexico=true;
@@ -312,7 +314,7 @@ public class HelloApplication extends Application {
                         lista_identificadores.add(new Simbolo(token,"cadena",token));
                     }else{
                         String mensaje="Símbolo no identificado cerca de '"+token+"'!";
-                        StyleSpans<Collection<String>> spans = new StyleSpansBuilder<Collection<String>>().add(Collections.singleton("error"), mensaje.length()).create();
+                        StyleSpans<Collection<String>> spans = new StyleSpansBuilder<Collection<String>>().add(Collections.singleton("compilacion_error"), mensaje.length()).create();
                         cda_error.replaceText(mensaje);
                         cda_error.setStyleSpans(0,spans);
                         continuar=false;

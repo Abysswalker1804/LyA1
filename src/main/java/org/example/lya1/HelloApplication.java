@@ -37,7 +37,7 @@ public class HelloApplication extends Application {
         Q3
     }
 
-    private static final List<String> palabrasReservadas= Arrays.asList("dclr","DCLR","set","SET","add","ADD","mul","MUL","div","DIV","sub","SUB","print","PRINT","if","IF","while","WHILE","do","DO","then","THEN","finish","FINISH");
+    private static final List<String> palabrasReservadas= Arrays.asList("dclr","DCLR","set","SET","add","ADD","mul","MUL","div","DIV","sub","SUB","print","PRINT","if","IF","else","ELSE","while","WHILE","do","DO","then","THEN","finish","FINISH");
     private List<Integer> direcciones_hash=new ArrayList<>();
     private static enum StateNum{
         Q0,

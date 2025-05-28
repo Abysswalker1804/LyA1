@@ -4,7 +4,7 @@ import java.math.BigInteger;
 public class Hash{
     public static void main(String args[]){
         Hash hash=new Hash();
-        System.out.println(hash.hash("BEGIN"));
+        System.out.println(hash.hash(".starx"));
     }
     public String hash(String cadena){
         //Suma en base a carácteres de base 64

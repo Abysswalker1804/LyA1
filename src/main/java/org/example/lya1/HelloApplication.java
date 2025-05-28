@@ -483,7 +483,12 @@ public class HelloApplication extends Application {
                     raf.writeUTF(s.getSimbolo());
                     raf.writeUTF(s.getTipo());
                     raf.writeUTF(s.getValor());
-                    direcciones_hash.add(direccion_hash);
+                    if(!direcciones_hash.contains(direccion_hash)){
+                        direcciones_hash.add(direccion_hash);
+                    }else{
+                        while(direcciones_hash.contains(direccion_hash) && (direccion_hash>=0 && direccion_hash<=9999)){direccion_hash++;}
+                        direcciones_hash.add(direccion_hash);
+                    }
                 }
             }
             //Guardar identificadores en la tabla de símbolos
@@ -495,7 +500,12 @@ public class HelloApplication extends Application {
                 raf.writeUTF(s.getSimbolo());
                 raf.writeUTF(s.getTipo());
                 raf.writeUTF(s.getValor());
-                direcciones_hash.add(direccion_hash);
+                if(!direcciones_hash.contains(direccion_hash)){
+                    direcciones_hash.add(direccion_hash);
+                }else{
+                    while(direcciones_hash.contains(direccion_hash) && (direccion_hash>=0 && direccion_hash<=9999)){direccion_hash++;}
+                    direcciones_hash.add(direccion_hash);
+                }
             }
             //Todos los simbolos guardados
         }catch (FileNotFoundException fnfe){

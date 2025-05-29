@@ -2,9 +2,11 @@ package org.example.lya1.Hash;
 import java.math.BigInteger;
 
 public class Hash{
+    private static final BigInteger MOD = new BigInteger("340282366920938463463374607431768211507"); // 2^128 - 19, primo
+
     public static void main(String args[]){
         Hash hash=new Hash();
-        System.out.println(hash.hash(".starx"));
+        System.out.println(hash.hash("stars "));
     }
     public String hash(String cadena){
         //Suma en base a carácteres de base 64
@@ -12,21 +14,19 @@ public class Hash{
         BigInteger mezcla,desp_16,desp_32,suma=new BigInteger("0");
         for(int i=0; i<cadena.length(); i++){
             car=cadena.charAt(i);
-            suma=suma.add(new BigInteger(valor(car)+""));
+            suma=suma.add(new BigInteger(((int)(valor(car)*Math.pow(64,i)))+""));
         }
         //Desplazamiento a 16 y a 32 bits
         desp_16=suma.divide(new BigInteger("65536"));
         desp_32=suma.divide(new BigInteger("4294967296"));
         mezcla=suma;
 
-        while(desp_16.equals(new BigInteger("0"))){
-            mezcla=mezcla.multiply(suma);
-            desp_16=desp_16.subtract(new BigInteger("1"));
+        for (BigInteger i = BigInteger.ZERO; i.compareTo(desp_16) < 0; i = i.add(BigInteger.ONE)) {
+            mezcla = mezcla.multiply(suma).mod(MOD);
         }
         BigInteger mezcla_intermedia=mezcla;
-        while(desp_32.equals(new BigInteger("0"))){
-            mezcla=mezcla.multiply(mezcla_intermedia);
-            desp_32=desp_32.subtract(new BigInteger("1"));
+        for (BigInteger i = BigInteger.ZERO; i.compareTo(desp_32) < 0; i = i.add(BigInteger.ONE)) {
+            mezcla = mezcla.multiply(mezcla_intermedia).mod(MOD);
         }
 
         return (mezcla.mod(new BigInteger("65536"))).mod(new BigInteger("10000")).toString();
